@@ -1,0 +1,7 @@
+
+[build]
+target = "x86_64-unknown-uefi"
+
+[target.x86_64-unknown-uefi]
+runner = "scripts/run-qemu-x86_64.sh"
+rustflags = ["-C", "link-args=/debug:dwarf"]
