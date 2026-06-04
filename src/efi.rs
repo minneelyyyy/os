@@ -61,7 +61,7 @@ fn create_memory_map_for_kernel(map: *const efi::MemoryDescriptor, buf: *mut mem
 
         let out = unsafe { buf.add(i) };
         unsafe {
-            *out = memory::MemoryRegion::new(rtype, (*region).physical_start as usize, (*region).number_of_pages as usize * PAGE_SIZE)
+            *out = memory::MemoryRegion::new(rtype, (*region).physical_start as usize, (*region).number_of_pages as usize)
         };
     }
 }

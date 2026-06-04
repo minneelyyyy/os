@@ -83,6 +83,30 @@ struct Gdt {
     tss: TssDescriptor,
 }
 
+#[repr(C, packed)]
+pub struct Tss {
+    reserved0: u32,
+
+    rsp0: u64,
+    rsp1: u64,
+    rsp2: u64,
+
+    reserved1: u64,
+
+    ist1: u64,
+    ist2: u64,
+    ist3: u64,
+    ist4: u64,
+    ist5: u64,
+    ist6: u64,
+    ist7: u64,
+
+    reserved2: u64,
+    reserved3: u16,
+
+    io_map_base: u16,
+}
+
 static mut GDT: Gdt = Gdt {
     null: SegmentDescriptor::new()
         .with_base(0x0)
@@ -111,30 +135,6 @@ static mut GDT: Gdt = Gdt {
         .with_flags(0xa),
     tss: TssDescriptor::new(),
 };
-
-#[repr(C, packed)]
-pub struct Tss {
-    reserved0: u32,
-
-    rsp0: u64,
-    rsp1: u64,
-    rsp2: u64,
-
-    reserved1: u64,
-
-    ist1: u64,
-    ist2: u64,
-    ist3: u64,
-    ist4: u64,
-    ist5: u64,
-    ist6: u64,
-    ist7: u64,
-
-    reserved2: u64,
-    reserved3: u16,
-
-    io_map_base: u16,
-}
 
 static mut TSS: Tss = Tss {
     reserved0: 0,

@@ -2,10 +2,9 @@ use core::arch::asm;
 
 use bitfield_struct::bitfield;
 
-use crate::printlnk;
-
 mod gdt;
 mod idt;
+mod irq;
 
 #[bitfield(u16)]
 pub struct SegmentSelector {
@@ -51,10 +50,6 @@ pub unsafe fn inb(port: u16) -> u8 {
 pub fn init() {
     gdt::init();
     idt::init();
-
-    // This line seems to affect the behaviour caused by the following
-    // ud2 call for some reason.
-    // printlnk!("IDT Initialized.");
 
     unsafe {
         asm!("ud2")

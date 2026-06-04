@@ -4,13 +4,7 @@ use core::arch::asm;
 
 use bitfield_struct::bitfield;
 
-use crate::printlnk;
-
-#[repr(C, packed)]
-struct Idtr {
-    limit: u16,
-    offset: u64,
-}
+use super::irq;
 
 #[bitfield(u128)]
 struct GateDescriptor {
@@ -43,51 +37,25 @@ impl GateDescriptor {
 
 static mut IDT: [GateDescriptor; 256] = [GateDescriptor::new(); 256];
 
-#[repr(C, align(0x10))]
-pub struct InterruptFrame {
-    r15: u64,
-    r14: u64,
-    r13: u64,
-    r12: u64,
-    r11: u64,
-    r10: u64,
-    r9: u64,
-    r8: u64,
-
-    rsi: u64,
-    rdi: u64,
-    rbp: u64,
-    rdx: u64,
-    rcx: u64,
-    rbx: u64,
-    rax: u64,
-
-    vector: u64,
-    error_code: u64,
-
-    rip: u64,
-    cs: u64,
-    rflags: u64,
-}
-
-unsafe extern "C" {
-    fn isr6();
-}
-
-#[unsafe(no_mangle)]
-extern "C" fn interrupt_handler(frame: *const InterruptFrame) {
-    // In builds with the printlnk call from x86_64::init built in, this is a NULL pointer.
-    // otherwise, it seems like a valid pointer, but accessing it causes it to crash.
-    printlnk!("frame ptr = {:p}", frame);
-
-    // causes either a panic or a crash.
-    // printlnk!("vector = {}", unsafe { (*frame).vector })
+#[repr(C, packed)]
+struct Idtr {
+    limit: u16,
+    offset: u64,
 }
 
 pub fn init() {
     unsafe {
         IDT[6] = GateDescriptor::new()
-            .with_offset(isr6 as *const () as u64)
+            .with_offset(irq::invalid_opcode as *const () as u64)
+            .with_segment_selector(super::SegmentSelector::new()
+                .with_index(1)
+                .with_rpl(0)
+                .with_ti(false))
+            .with_present(true)
+            .with_gate_type(0xE);
+
+        IDT[14] = GateDescriptor::new()
+            .with_offset(irq::page_fault as *const () as u64)
             .with_segment_selector(super::SegmentSelector::new()
                 .with_index(1)
                 .with_rpl(0)
@@ -96,7 +64,7 @@ pub fn init() {
             .with_gate_type(0xE);
     }
 
-    let gdtr = Idtr {
+    let idtr = Idtr {
         limit: (mem::size_of::<[GateDescriptor; 256]>() - 1) as u16,
         offset: &raw const IDT as u64,
     };
@@ -104,7 +72,7 @@ pub fn init() {
     unsafe {
         asm!(
             "lidt [{}]",
-            in(reg) &raw const gdtr,
+            in(reg) &raw const idtr,
             options(readonly, nostack, preserves_flags)
         )
     };
