@@ -1,5 +1,5 @@
 use crate::{mem::MemoryRegion, printlnk};
-use super::mem;
+use crate::boot::mem;
 
 use core::{ptr, time};
 
@@ -123,7 +123,7 @@ unsafe extern "efiapi" fn efi_main(h: efi::Handle, st: *mut efi::SystemTable) ->
         match unsafe { (bs.exit_boot_services)(h, key) } {
             base::Status::SUCCESS => {
                 unsafe {
-                    super::arch::entry(super::BootData {
+                    super::entry::uefi_entry(super::BootData {
                         map: mem::MemoryMap::new(kernel_map, size),
                         kernel_region: image_region,
                     });
