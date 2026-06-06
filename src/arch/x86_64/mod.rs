@@ -1,20 +1,5 @@
 use core::arch::asm;
 
-use bitfield_struct::bitfield;
-
-mod gdt;
-mod idt;
-mod irq;
-
-#[bitfield(u16)]
-pub struct SegmentSelector {
-    #[bits(2)]
-    rpl: usize,
-    ti: bool,
-    #[bits(13)]
-    index: usize,
-}
-
 pub unsafe fn hcf() -> ! {
     loop {
         unsafe { asm!("hlt") };
@@ -45,13 +30,4 @@ pub unsafe fn inb(port: u16) -> u8 {
     };
 
     value
-}
-
-pub fn init() {
-    gdt::init();
-    idt::init();
-
-    unsafe {
-        asm!("ud2")
-    };
 }

@@ -3,15 +3,10 @@
 
 use core::panic::PanicInfo;
 
-mod efi;
-mod memory;
+mod mem;
 mod serial;
-
-#[cfg(target_arch = "x86_64")]
-pub mod arch {
-    mod x86_64;
-    pub use x86_64::*;
-}
+mod arch;
+mod boot;
 
 #[macro_export]
 macro_rules! printk {
@@ -32,14 +27,8 @@ macro_rules! printlnk {
     }
 }
 
-pub struct BootData {
-    map: memory::MemoryMap,
-}
-
-pub fn kmain(_data: BootData) -> ! {
-    arch::init();
-    printlnk!("CPU Initialized.");
-
+pub unsafe fn kmain() -> ! {
+    printlnk!("Hello, world!");
     unsafe { arch::hcf() };
 }
 

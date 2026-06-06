@@ -1,7 +1,28 @@
-use crate::printlnk;
+use crate::{arch::hcf, printlnk};
+
+#[repr(u8)]
+enum InterruptVector {
+    DivideError = 0,
+    DebugException = 1,
+    Breakpoint = 3,
+    Overflow = 4,
+    BoundRangeExceeded = 5,
+    InvalidOpcode = 6,
+    DoubleFault = 8,
+    InvalidTss = 10,
+    SegmentNotPresent = 11,
+    StackSegmentFault = 12,
+    GeneralProtection = 13,
+    PageFault = 14,
+    AlignmentCheck = 17,
+    MachineCheck = 18,
+    FloatingPointException = 19,
+    VirtualizationException = 20,
+    ControlProtectionException = 21,
+}
 
 #[repr(C)]
-pub struct InterruptFrame {
+struct InterruptFrame {
     r15: u64,
     r14: u64,
     r13: u64,
@@ -80,6 +101,7 @@ extern "C" fn common_isr() {
         "push r14",
         "push r15",
 
+        // assumes win64 ABI
         "mov rcx, rsp",
         "sub rsp, 32",
         "call {}",
@@ -110,7 +132,11 @@ extern "C" fn common_isr() {
     );
 }
 
-extern "C" fn interrupt_handler(frame: *const InterruptFrame) {
+unsafe extern "C" fn interrupt_handler(frame: *const InterruptFrame) {
     printlnk!("frame ptr = {:p}", frame);
     printlnk!("vector = {}", unsafe { (*frame).vector });
+    printlnk!("common_isr = {:p}", common_isr as *const ());
+    printlnk!("interrupt_handler = {:p}", interrupt_handler as *const ());
+
+    unsafe { hcf() };
 }

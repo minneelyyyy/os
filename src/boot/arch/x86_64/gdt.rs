@@ -4,6 +4,15 @@ use core::arch::asm;
 
 use bitfield_struct::bitfield;
 
+#[bitfield(u16)]
+pub struct SegmentSelector {
+    #[bits(2)]
+    pub rpl: usize,
+    pub ti: bool,
+    #[bits(13)]
+    pub index: usize,
+}
+
 #[bitfield(u64)]
 struct SegmentDescriptor {
     limit_lo: u16,
@@ -165,7 +174,7 @@ struct GdtDescriptor {
     offset: u64,
 }
 
-pub fn init() {
+pub unsafe fn init() {
     unsafe { 
         GDT.tss = TssDescriptor::new()
             .with_base(&raw const TSS as u64)

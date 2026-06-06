@@ -10,7 +10,7 @@ use super::irq;
 struct GateDescriptor {
     offset_lo: u16,
     #[bits(16)]
-    segment_selector: super::SegmentSelector,
+    segment_selector: super::gdt::SegmentSelector,
     #[bits(5)]
     _reserved: usize,
     #[bits(3)]
@@ -43,11 +43,11 @@ struct Idtr {
     offset: u64,
 }
 
-pub fn init() {
+pub unsafe fn init() {
     unsafe {
         IDT[6] = GateDescriptor::new()
             .with_offset(irq::invalid_opcode as *const () as u64)
-            .with_segment_selector(super::SegmentSelector::new()
+            .with_segment_selector(super::gdt::SegmentSelector::new()
                 .with_index(1)
                 .with_rpl(0)
                 .with_ti(false))
@@ -56,7 +56,7 @@ pub fn init() {
 
         IDT[14] = GateDescriptor::new()
             .with_offset(irq::page_fault as *const () as u64)
-            .with_segment_selector(super::SegmentSelector::new()
+            .with_segment_selector(super::gdt::SegmentSelector::new()
                 .with_index(1)
                 .with_rpl(0)
                 .with_ti(false))
