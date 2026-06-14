@@ -23,4 +23,3 @@ qemu-system-x86_64 \
     -drive format=raw,file="$OUT" \
     -serial stdio \
     -m 8G
-

@@ -14,10 +14,9 @@ pub unsafe fn uefi_entry(info: boot::BootData) -> ! {
     printlnk!("KERNEL IMAGE: Base {:p} Number of Pages {}",
         info.kernel_region.base, info.kernel_region.npages);
 
-    let early = boot::mem::EarlyBootAllocator::init(&info.map);
+    let mut early = boot::mem::EarlyBootAllocator::init(&info.map);
 
-    let m = unsafe { arch::paging::early_init(&early, &info.map) };
-    let hh = unsafe { arch::paging::map_higher_half_kernel(m, &early, &info.kernel_region) };
+    let hh = unsafe { arch::paging::map_higher_half_kernel(&mut early, info.kernel_region).unwrap() };
 
-    unsafe { arch::perform_higher_half_jump(hh, info, early) };
+    unsafe { arch::paging::perform_higher_half_jump(hh, info, early) };
 }

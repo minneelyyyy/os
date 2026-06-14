@@ -41,6 +41,7 @@ impl MemoryMap {
 
 use core::ptr;
 
+#[repr(C)]
 pub struct EarlyBootAllocator {
     head: *mut BumpRegionMeta,
 }
@@ -116,6 +117,12 @@ impl EarlyBootAllocator {
         let page = unsafe { (*usable_region).top } as *mut _;
         unsafe { (*usable_region).top = (*usable_region).top.add(1) };
 
+        page
+    }
+
+    pub unsafe fn get_page_zeroed(&mut self) -> *mut Page {
+        let page = unsafe { self.get_page() };
+        unsafe { (*page).0.fill(0x0) };
         page
     }
 }

@@ -1,5 +1,5 @@
 
-use crate::boot;
+use crate::{boot, mem};
 
 pub mod paging;
 
@@ -7,14 +7,15 @@ mod gdt;
 mod idt;
 mod irq;
 
-pub unsafe fn perform_higher_half_jump(
-    _cookie: paging::MappedHigherHalf,
-    _info: boot::BootData,
-    _early: boot::mem::EarlyBootAllocator) -> !
-{
-    todo!()
+pub struct ArchEntry {
+    map: paging::PageMap,
+    kernel_region: mem::MemoryRegion,
+    alloc: boot::mem::EarlyBootAllocator,
 }
 
-pub unsafe fn arch_entry(_info: boot::BootData) -> ! {
-    todo!()
+pub unsafe fn arch_entry(entry: ArchEntry) -> ! {
+    unsafe { gdt::init() };
+    unsafe { idt::init() };
+
+    unsafe { crate::kmain() };
 }

@@ -1,7 +1,7 @@
 use crate::{mem::MemoryRegion, printlnk};
 use crate::boot::mem;
 
-use core::{ptr, time};
+use core::{ptr, slice, time};
 
 use r_efi::{base, efi::{self, BootServices}};
 
@@ -75,8 +75,15 @@ unsafe fn get_efi_memory_map(bs: &BootServices, buf: *mut efi::MemoryDescriptor,
 }
 
 unsafe fn create_memory_map_for_kernel(map: *const efi::MemoryDescriptor, buf: *mut mem::BootMappedRegion, n: usize, elem_size: usize) {
+    printlnk!("UEFI MAP: {map:p} {buf:p}");
+    
     for i in 0..n {
         let region = unsafe { map.byte_add(i * elem_size) };
+
+        unsafe {
+            printlnk!("Base: {:016p} Number of Pages: {:10}  {} ({})",
+                (*region).physical_start as *const (), (*region).number_of_pages, efi_type_as_str((*region).r#type), (*region).r#type);
+        }
 
         let rtype = match unsafe { (*region).r#type } {
             efi::BOOT_SERVICES_CODE | efi::BOOT_SERVICES_DATA |
@@ -95,6 +102,27 @@ unsafe fn create_memory_map_for_kernel(map: *const efi::MemoryDescriptor, buf: *
                     (*region).physical_start as *mut _,
                     (*region).number_of_pages as usize))
         };
+    }
+}
+
+fn efi_type_as_str(t: u32) -> &'static str {
+    match t {
+        efi::RESERVED_MEMORY_TYPE => "Reserved",
+        efi::LOADER_CODE => "Loader Code",
+        efi::LOADER_DATA => "Loader Data",
+        efi::BOOT_SERVICES_CODE => "Boot Services Code",
+        efi::BOOT_SERVICES_DATA => "Boot Services Data",
+        efi::RUNTIME_SERVICES_CODE => "Runtime Services Code",
+        efi::RUNTIME_SERVICES_DATA => "Runtime Services Data",
+        efi::CONVENTIONAL_MEMORY => "Conventional Memory",
+        efi::UNUSABLE_MEMORY => "Unusable Memory",
+        efi::ACPI_RECLAIM_MEMORY => "ACPI Reclaimable Memory",
+        efi::ACPI_MEMORY_NVS => "ACPI Memory NVS",
+        efi::MEMORY_MAPPED_IO => "Memory Mapped IO",
+        efi::MEMORY_MAPPED_IO_PORT_SPACE => "Memory Mapped IO Port Space",
+        efi::PAL_CODE => "EFI PAL Code",
+        efi::PERSISTENT_MEMORY => "Persistent Memory",
+        _ => "Unknown",
     }
 }
 
